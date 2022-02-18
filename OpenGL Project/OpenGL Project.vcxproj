@@ -124,6 +124,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\shader.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Project.rc" />
@@ -163,6 +165,15 @@
   <ItemGroup>
     <Image Include="Textures\pog.ico" />
     <Image Include="Textures\pog.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\dynamic_list.h" />
+    <ClInclude Include="include\shader.h" />
+    <ClInclude Include="include\vector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader.fs" />
+    <None Include="shaders\shader.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

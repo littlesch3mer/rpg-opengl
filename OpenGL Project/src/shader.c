@@ -22,6 +22,7 @@ int createShader(char* name, char* vertexPath, char* fragmentPath)
 	unsigned int sFragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(sFragment, 1, &fragmentSource, NULL);
 	glCompileShader(sFragment);
+	printf("%s\n", fragmentSource);
 	if (!checkShaderErrors(sFragment, "FRAGMENT"))
 	{
 		printf("Fragment Shader Compile Error\n");
@@ -76,19 +77,49 @@ int useShader(char* shader)
 int checkShaderErrors(unsigned int object, char* type)
 {
 	int success;
+	char infoLog[1024];
+
 	if (type != "PROGRAM")
 	{
 		glGetShaderiv(object, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(object, 1024, NULL, infoLog);
+			printf("%s",infoLog);
+		}
 	}
 	else
 	{
-		glGetShaderiv(object, GL_LINK_STATUS, &success);
+		glGetProgramiv(object, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			glGetProgramInfoLog(object, 1024, NULL, infoLog);
+			printf("%s",infoLog);
+		}
 	}
 	return success;
 }
 
 char* getCodeFromPath(char* path)
 {
+	char* fcontent = NULL;
+	int fsize = 0;
+	FILE* fp;
+
+	fopen_s(&fp,path, "r");
+	if (fp) {
+		fseek(fp, 0, SEEK_END);
+		fsize = ftell(fp);
+		rewind(fp);
+
+		fcontent = (char*)malloc(sizeof(char) * fsize);
+		int n = fread(fcontent, 1, fsize, fp);
+		fcontent[n] = '\0';
+
+		fclose(fp);
+	}
+	return fcontent;
+	/*
 	char* buffer = NULL;
 	size_t size = 0;
 	FILE* fp;
@@ -104,6 +135,8 @@ char* getCodeFromPath(char* path)
 	rewind(fp);
 
 	buffer = malloc((size + 1) * sizeof(*buffer));
-	fread(buffer, size, 1, fp);
-	return buffer;
+	int n = fread(buffer, size, 1, fp);
+	buffer[n] = '\0';
+
+	return buffer;*/
 }

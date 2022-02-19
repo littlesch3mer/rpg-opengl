@@ -24,6 +24,15 @@
     <ClCompile Include="src\shader.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\sprite_renderer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stbi_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mathc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Project.rc">
@@ -42,15 +51,14 @@
     <ClInclude Include="include\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\vector.h">
+    <ClInclude Include="include\sprite_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\dynamic_list.h">
+    <ClInclude Include="include\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\shader.fs" />
-    <None Include="shaders\shader.vs" />
+    <ClInclude Include="include\mathc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -5,8 +6,9 @@
 #include <stdlib.h>
 #include "shader.h"
 #include "sprite_renderer.h"
-#include "mathc.h"
 #include "stb_image.h"
+#include <cglm/cglm.h>
+#include "renderer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -76,36 +78,32 @@ int main(int argc, char** argv)
 	createShader("test", "Shaders/shader.vert", "Shaders/shader.frag");
 	useShader("test");
     setInt("test", "texture1", 0);
-    setInt("test", "texture2", 1);
-    
-    /*
-    mfloat_t modelMatrix[VEC4_SIZE];
-    mat4_identity(modelMatrix);
-
-    mfloat_t perspective[MAT4_SIZE];
-
-    mat4_perspective(perspective, to_radians(60.0), 1.0, 0.1, 100.0);
-
-    mfloat_t position[VEC3_SIZE];
-    mfloat_t target[VEC3_SIZE];
-    mfloat_t up[VEC3_SIZE];
-    mfloat_t view[MAT4_SIZE];
-
-    mat4_look_at(view,
-        vec3(position, 0.0, 0.0, 10.0),
-        vec3(target, 0.0, 0.0, 0.0),
-        vec3(up, 0.0, 1.0, 0.0));
 
     unsigned int shader = getShader("test");
     unsigned int modelLoc = glGetUniformLocation(shader, "model");
     unsigned int viewLoc = glGetUniformLocation(shader, "view");
     unsigned int projLoc = glGetUniformLocation(shader, "projection");
 
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view);
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, perspective);
-    */
+	mat4 proj, view, model;
+	glm_mat4_identity(model);
+
+	glm_mat4_identity(view);
+	glm_translate(model, (vec3) { 0, -1, 5 });
+	vec3 cPos = { 0,3,3 };
+	vec3 cFront = { 0,0,-1 };
+	vec3 cUp = { 0,1,0 };
+	vec3 cRight = { 1,0,0 };
+	glm_lookat(cFront, cPos, cUp, view);
+	glm_rotate(view, glm_rad(-45), cRight);
+	glm_perspective(glm_rad(60), SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 1000, proj);
+
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
+    
+	float ang = 0;
 	// render loop
+	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
 	{
 		// input
@@ -116,10 +114,13 @@ int main(int argc, char** argv)
         glBindTexture(GL_TEXTURE_2D, texture);
 		// render
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-        // model matrix		
-		renderSpriteViewSpace(0, -0.3f, 0.3f, 0.3f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// model matrix		
+		glm_rotate(model, glm_rad(0.01), (vec3) { 0,1, 0 });
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
 
+		//renderSpriteViewSpace(0, 0, 1.0f, 1.0f);
+		renderCube("test");
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();

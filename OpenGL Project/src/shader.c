@@ -22,7 +22,6 @@ int createShader(char* name, char* vertexPath, char* fragmentPath)
 	unsigned int sFragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(sFragment, 1, &fragmentSource, NULL);
 	glCompileShader(sFragment);
-	printf("%s\n", fragmentSource);
 	if (!checkShaderErrors(sFragment, "FRAGMENT"))
 	{
 		printf("Fragment Shader Compile Error\n");
@@ -119,24 +118,4 @@ char* getCodeFromPath(char* path)
 		fclose(fp);
 	}
 	return fcontent;
-	/*
-	char* buffer = NULL;
-	size_t size = 0;
-	FILE* fp;
-	errno_t err = fopen_s(&fp, path, "r");
-	if (err != 0)
-	{
-		printf("Shit!\n");
-		return NULL; //idk lmo
-	}
-	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
-
-	rewind(fp);
-
-	buffer = malloc((size + 1) * sizeof(*buffer));
-	int n = fread(buffer, size, 1, fp);
-	buffer[n] = '\0';
-
-	return buffer;*/
 }

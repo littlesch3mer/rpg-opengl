@@ -7,4 +7,5 @@
 
 void renderSpriteViewSpace(float centerX, float centerY, float halfX, float halfY);
 
+
 #endif

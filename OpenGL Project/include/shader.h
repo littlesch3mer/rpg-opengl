@@ -1,7 +1,6 @@
 #ifndef SHADER_H
 #define SHADER_H
 #include <glad/glad.h>
-#include "mathc.h"
 #define SHADER_ARRAY_SIZE 32
 // todo: shader serialization
 // more property setters (vectors, etc)

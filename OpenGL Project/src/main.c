@@ -9,6 +9,7 @@
 #include "stb_image.h"
 #include <cglm/cglm.h>
 #include "renderer.h"
+#include "camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
     // load image, create texture and generate mipmaps
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(1); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char* data = stbi_load("textures/funny.png", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("textures/default.png", &width, &height, &nrChannels, 0);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -84,28 +85,32 @@ int main(int argc, char** argv)
     unsigned int viewLoc = glGetUniformLocation(shader, "view");
     unsigned int projLoc = glGetUniformLocation(shader, "projection");
 
+	Camera c = { .position = {0,0,3}};
+	glm_quat_identity(c.rotation);
 	mat4 proj, view, model;
 	glm_mat4_identity(model);
 
+	glm_translate(model, (vec3) {0, 0,-5 });
+
 	glm_mat4_identity(view);
-	glm_translate(model, (vec3) { 0, -1, 5 });
-	vec3 cPos = { 0,3,3 };
-	vec3 cFront = { 0,0,-1 };
-	vec3 cUp = { 0,1,0 };
-	vec3 cRight = { 1,0,0 };
-	glm_lookat(cFront, cPos, cUp, view);
-	glm_rotate(view, glm_rad(-45), cRight);
+	cameraViewMatrix(c, view);
+
+	glm_mat4_identity(proj);
 	glm_perspective(glm_rad(60), SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 1000, proj);
+
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
     
-	float ang = 0;
 	// render loop
+	float delta = 0;
+	float last = glfwGetTime();
 	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
 	{
+		delta = glfwGetTime() - last;
+		last = glfwGetTime();
 		// input
 		processInput(window);
 
@@ -116,9 +121,12 @@ int main(int argc, char** argv)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// model matrix		
-		glm_rotate(model, glm_rad(0.01), (vec3) { 0,1, 0 });
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
-
+		//glm_rotate(model, glm_rad(0.01), (vec3) { 0,1, 0 });
+		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
+		
+		cameraViewMatrix(c, view);
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
+		c.position[2] -= 0.001;
 		//renderSpriteViewSpace(0, 0, 1.0f, 1.0f);
 		renderCube("test");
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -131,7 +139,6 @@ int main(int argc, char** argv)
 	glfwTerminate();
 	return 0;
 }
-
 void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)

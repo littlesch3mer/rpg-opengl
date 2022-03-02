@@ -17,7 +17,8 @@ void processInput(GLFWwindow* window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
+float delta;
+Camera c;
 int main(int argc, char** argv)
 {
 	// glfw: initialize and configure
@@ -85,12 +86,13 @@ int main(int argc, char** argv)
     unsigned int viewLoc = glGetUniformLocation(shader, "view");
     unsigned int projLoc = glGetUniformLocation(shader, "projection");
 
-	Camera c = { .position = {0,0,3}};
+	Camera c = { .position = {0,2,0} };
 	glm_quat_identity(c.rotation);
 	mat4 proj, view, model;
 	glm_mat4_identity(model);
 
-	glm_translate(model, (vec3) {0, 0,-5 });
+	glm_scale(model, (vec3) { 25, 0.1f, 25 });
+	glm_translate(model, (vec3) {0, 0,0 });
 
 	glm_mat4_identity(view);
 	cameraViewMatrix(c, view);
@@ -104,7 +106,7 @@ int main(int argc, char** argv)
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
     
 	// render loop
-	float delta = 0;
+	delta = 0;
 	float last = glfwGetTime();
 	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
@@ -113,6 +115,23 @@ int main(int argc, char** argv)
 		last = glfwGetTime();
 		// input
 		processInput(window);
+		float speed = 5;
+		float rotSpeed = 60 * delta;
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) c.position[2] -= speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) c.position[2] += speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) c.position[0] += speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) c.position[0] -= speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) c.position[1] += speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) c.position[1] -= speed * delta;
+		versor rot;
+		glm_quat(rot, glm_rad(rotSpeed), -1, 0, 0);
+		//if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) glm_quat_mul(c.rotation,rot,c.rotation);
+		glm_quat(rot, glm_rad(rotSpeed), 1, 0, 0);
+		//if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
+		glm_quat(rot, glm_rad(rotSpeed), 0, 1, 0);
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
+		glm_quat(rot, glm_rad(rotSpeed), 0, -1, 0);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
 
 		// vbo thing
         glActiveTexture(GL_TEXTURE0);
@@ -126,15 +145,13 @@ int main(int argc, char** argv)
 		
 		cameraViewMatrix(c, view);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
-		c.position[2] -= 0.001;
+
 		//renderSpriteViewSpace(0, 0, 1.0f, 1.0f);
 		renderCube("test");
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	glfwTerminate();
 	return 0;
@@ -143,6 +160,7 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, 1);
+
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {

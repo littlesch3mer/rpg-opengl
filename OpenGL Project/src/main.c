@@ -6,19 +6,23 @@
 #include <stdlib.h>
 #include "shader.h"
 #include "sprite_renderer.h"
-#include "stb_image.h"
 #include <cglm/cglm.h>
 #include "renderer.h"
-#include "camera.h"
+#include "texture.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
+void setupShaderMatrices();
+void updateCamera();
+
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const int SCR_WIDTH = 800;
+const int SCR_HEIGHT = 600;
 float delta;
-Camera c;
+vec3 cameraPos = { 0,0,0 };
+float cameraSize = 8;
+
 int main(int argc, char** argv)
 {
 	// glfw: initialize and configure
@@ -42,68 +46,30 @@ int main(int argc, char** argv)
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable(GL_DEPTH_TEST);
+	//glDepthFunc(GL_LESS);
+
+	// stbi setup
+	stbi_set_flip_vertically_on_load(1);
+	
 	// glad: load all OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		printf("Failed to initialize GLAD\n");
 		return -1;
 	}
-    // load and create a texture 
-// -------------------------
-    unsigned int texture;
-    // texture 1
-    // ---------
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(1); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char* data = stbi_load("textures/default.png", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        printf("Failed to load texture1\n");
-    }
-    stbi_image_free(data);
+
+	// texture
+	createTexture("test", "textures/default.png", 1);
+	bindTexture("test");
     
 	// shaders
 	createShader("test", "Shaders/shader.vert", "Shaders/shader.frag");
 	useShader("test");
     setInt("test", "texture1", 0);
-
-    unsigned int shader = getShader("test");
-    unsigned int modelLoc = glGetUniformLocation(shader, "model");
-    unsigned int viewLoc = glGetUniformLocation(shader, "view");
-    unsigned int projLoc = glGetUniformLocation(shader, "projection");
-
-	Camera c = { .position = {0,2,0} };
-	glm_quat_identity(c.rotation);
-	mat4 proj, view, model;
-	glm_mat4_identity(model);
-
-	glm_scale(model, (vec3) { 25, 0.1f, 25 });
-	glm_translate(model, (vec3) {0, 0,0 });
-
-	glm_mat4_identity(view);
-	cameraViewMatrix(c, view);
-
-	glm_mat4_identity(proj);
-	glm_perspective(glm_rad(60), SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 1000, proj);
-
-
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
+	setupShaderMatrices();
     
 	// render loop
 	delta = 0;
@@ -111,43 +77,31 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
 	{
+		updateCamera();
 		delta = glfwGetTime() - last;
 		last = glfwGetTime();
 		// input
 		processInput(window);
 		float speed = 5;
 		float rotSpeed = 60 * delta;
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) c.position[2] -= speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) c.position[2] += speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) c.position[0] += speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) c.position[0] -= speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) c.position[1] += speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) c.position[1] -= speed * delta;
-		versor rot;
-		glm_quat(rot, glm_rad(rotSpeed), -1, 0, 0);
-		//if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) glm_quat_mul(c.rotation,rot,c.rotation);
-		glm_quat(rot, glm_rad(rotSpeed), 1, 0, 0);
-		//if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
-		glm_quat(rot, glm_rad(rotSpeed), 0, 1, 0);
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
-		glm_quat(rot, glm_rad(rotSpeed), 0, -1, 0);
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) glm_quat_mul(c.rotation, rot, c.rotation);
+		//if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) c.position[1] += speed * delta;
+		//if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) c.position[2] -= speed * delta;
+		//if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) c.position[0] += speed * delta;
+		//if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) c.position[0] -= speed * delta;
+		//if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) c.position[2] += speed * delta;
+		//if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) c.position[2] -= speed * delta;
 
-		// vbo thing
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+
 		// render
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// model matrix		
-		//glm_rotate(model, glm_rad(0.01), (vec3) { 0,1, 0 });
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
-		
-		cameraViewMatrix(c, view);
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
 
-		//renderSpriteViewSpace(0, 0, 1.0f, 1.0f);
-		renderCube("test");
+		//renderCube("test");
+		renderSprite((vec3) { 0, 0, 0 }, (vec3) { 1, 1, 1 },"test","test");
+		renderSprite((vec3) { 2, 0, 0 }, (vec3) { 1, 1, 1 }, "test", "test");
+		
+
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -161,6 +115,39 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, 1);
 
+}
+// setup projection, and basic model
+void setupShaderMatrices()
+{
+	// iterate through matrices later
+	unsigned int shader = getShader("test");
+	unsigned int modelLoc = glGetUniformLocation(shader, "model");
+	unsigned int projLoc = glGetUniformLocation(shader, "projection");
+
+	mat4 proj, model;
+	glm_mat4_identity(model);
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
+
+	glm_mat4_identity(proj);
+	float ratio = SCR_WIDTH / (float)SCR_HEIGHT;
+	float sizeH = cameraSize / 2;
+	float sizeW = sizeH * ratio;
+	glm_ortho(-sizeW,sizeW,-sizeH,sizeH, -100, 100, proj);
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
+}
+void updateCamera()
+{
+	unsigned int shader = getShader("test");
+	unsigned int viewLoc = glGetUniformLocation(shader, "view");
+	mat4 view;
+	glm_mat4_identity(view);
+	vec3 cPos = { 0,0,-1 };
+	vec3 cFront = { 0,0,1 };
+	vec3 cUp = { 0,1,0 };
+	vec3 cRight = { 1,0,0 };
+	glm_lookat(cFront, cPos, cUp, view);
+	setMat4("test", "view", view);
+	//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {

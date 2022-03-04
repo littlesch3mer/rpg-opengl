@@ -100,11 +100,14 @@ void renderSprite(vec3 position, vec3 size, char* shader, char* texture)
     glm_translate(model, position);
     glm_scale(model, size);
     //glm_translate(model, inversePos);
+
+    useShader(shader);
     setMat4(shader, "model", model);
 
     // set texture
     glActiveTexture(GL_TEXTURE0);
     bindTexture(texture);
+    setInt(shader, "texture1", 0);
     
     // create vbo
     GLuint VBO;

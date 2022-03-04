@@ -1,5 +1,6 @@
 #include "texture.h"
 #include <glad/glad.h>
+#include <stdio.h>
 int textureCount = 0;
 
 int createTexture(char* name, char* path, int alpha)
@@ -10,21 +11,29 @@ int createTexture(char* name, char* path, int alpha)
 
 	unsigned int format = alpha == 1 ? GL_RGBA : GL_RGB;	
 
-	unsigned int tex = 0;
+	unsigned int tex;
+	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	Texture t = { .ID = tex,.name = name };
+	textures[textureCount] = t;
+	textureCount++;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 	stbi_image_free(data);
+
 
 	return 0;
 }
 
 unsigned int getTexture(char* name)
 {
-	for (int i = 0; i < TEXTURE_ARRAY_SIZE; i++)
+	for (int i = 0; i < textureCount; i++)
 	{
 		if (name == textures[i].name)
 			return textures[i].ID;
@@ -34,6 +43,7 @@ unsigned int getTexture(char* name)
 
 int bindTexture(char* name)
 {
+	//printf("binding %s: %d\n", name,getTexture(name));
 	glBindTexture(GL_TEXTURE_2D, getTexture(name));
 	return 0;
 }

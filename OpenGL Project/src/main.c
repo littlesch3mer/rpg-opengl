@@ -62,15 +62,20 @@ int main(int argc, char** argv)
 	}
 
 	// texture
-	createTexture("test", "textures/default.png", 1);
-	bindTexture("test");
-    
+	createTexture("default", "textures/default.png", 1);
+	createTexture("player", "textures/player.png", 1);
+	createTexture("enemy", "textures/enemy.png", 1);
+	createTexture("tile", "textures/tile.png", 1);
+
 	// shaders
-	createShader("test", "Shaders/shader.vert", "Shaders/shader.frag");
-	useShader("test");
-    setInt("test", "texture1", 0);
+	createShader("sprite", "Shaders/sprite.vert", "Shaders/sprite.frag");
+	//createShader("basic", "Shaders/basic.vert", "Shaders/basic.frag");
+	useShader("sprite");
+    setInt("sprite", "texture1", 0);
 	setupShaderMatrices();
-    
+
+
+
 	// render loop
 	delta = 0;
 	float last = glfwGetTime();
@@ -98,8 +103,8 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//renderCube("test");
-		renderSprite((vec3) { 0, 0, 0 }, (vec3) { 1, 1, 1 },"test","test");
-		renderSprite((vec3) { 2, 0, 0 }, (vec3) { 1, 1, 1 }, "test", "test");
+		renderSprite((vec3) { 0, 0, 0 }, (vec3) { 1, 1, 1 },"sprite","player");
+		renderSprite((vec3) { 2, 0, 0 }, (vec3) { 1, 1, 1 }, "sprite", "enemy");
 		
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -120,7 +125,7 @@ void processInput(GLFWwindow* window)
 void setupShaderMatrices()
 {
 	// iterate through matrices later
-	unsigned int shader = getShader("test");
+	unsigned int shader = getShader("sprite");
 	unsigned int modelLoc = glGetUniformLocation(shader, "model");
 	unsigned int projLoc = glGetUniformLocation(shader, "projection");
 
@@ -137,7 +142,7 @@ void setupShaderMatrices()
 }
 void updateCamera()
 {
-	unsigned int shader = getShader("test");
+	unsigned int shader = getShader("sprite");
 	unsigned int viewLoc = glGetUniformLocation(shader, "view");
 	mat4 view;
 	glm_mat4_identity(view);
@@ -146,7 +151,7 @@ void updateCamera()
 	vec3 cUp = { 0,1,0 };
 	vec3 cRight = { 1,0,0 };
 	glm_lookat(cFront, cPos, cUp, view);
-	setMat4("test", "view", view);
+	setMat4("sprite", "view", view);
 	//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

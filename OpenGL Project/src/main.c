@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include "shader.h"
 #include "sprite_renderer.h"
@@ -11,6 +12,7 @@
 #include "texture.h"
 #include "objects/player.h"
 #include "objects/shot.h"
+#include "objects/enemy.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -27,6 +29,7 @@ float cameraSize = 8;
 
 int main(int argc, char** argv)
 {
+	srand(time(NULL));
 	// glfw: initialize and configure
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -78,8 +81,14 @@ int main(int argc, char** argv)
 	setupShaderMatrices();
 
 
+	vec3 minBounds = { -5,-3.7f, 0 };
+	vec3 maxBounds = {  5, 3.7f, 0 };
 	Player player = { .position = {0,0,0},.speed = 4 };
+	glm_vec3_copy(minBounds, player.minBounds);
+	glm_vec3_copy(maxBounds, player.maxBounds);
 	Shot shots[16];
+	Enemy enemies[4];
+	float nextEnemy = 2;
 	for (int i = 0; i < 16; i++)
 	{
 		shots[i].position[0] = shots[i].position[1] = shots[i].position[2] = 0;
@@ -87,6 +96,19 @@ int main(int argc, char** argv)
 		shots[i].timeleft = 0;
 		shots[i].active = 0;
 	}
+	for (int i = 0; i < 4; i++)
+	{
+		enemies[i].active = 0;
+		enemies[i].position[0] = enemies->position[2] = 0;
+		enemies[i].position[1] = 1;
+		enemies[i].destination[0] = enemies[i].destination[1] = enemies[i].destination[2] = 0;
+		enemies[i].shotCooldown = 0;
+		enemies[i].speed = 2;
+		glm_vec3_copy(minBounds, enemies[i].minBounds);
+		glm_vec3_copy(maxBounds, enemies[i].maxBounds);
+		enemies[i].minBounds[1] = 0;
+	}
+	initEnemy(&enemies[0]);
 	float shotCooldown = 0;
 	// render loop
 	delta = 0;
@@ -107,13 +129,17 @@ int main(int argc, char** argv)
 		//if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) c.position[0] -= speed * delta;
 		//if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) c.position[2] += speed * delta;
 		//if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) c.position[2] -= speed * delta;
-
+		
+		// clear color
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// gameloop
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) player.position[1] += player.speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) player.position[1] -= player.speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) player.position[0] -= player.speed * delta;
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) player.position[0] += player.speed * delta;
+		vec2 moveInput = { 0,0 };
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) moveInput[1] = 1;
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) moveInput[1] = -1;
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) moveInput[0] = -1;
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) moveInput[0] = 1;
 
 		//shoot
 		if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
@@ -133,10 +159,9 @@ int main(int argc, char** argv)
 			}
 		}
 		shotCooldown -= delta;
-		// render
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		nextEnemy -= delta;
 
+		// move and render shots
 		for (int i = 0; i < 16; i++)
 		{
 			updateShot(&shots[i], delta);
@@ -146,6 +171,35 @@ int main(int argc, char** argv)
 				renderSprite(shots[i].position, (vec3) { 0.25f,0.25f, 1 }, "sprite", "shot");
 			}
 		}
+		for (int i = 0; i < 4; i++)
+		{
+			updateEnemy(&enemies[i], delta);
+			if (enemies[i].active == 1)
+			{
+				//printf("%f,%f\n", enemies[i].position[0], enemies[i].position[1]);
+				renderSprite(enemies[i].position, (vec3) { 1, 1, 1 }, "sprite", "enemy");
+
+				// hack for projectiles!
+				for (int i = 0; i < 16; i++)
+				{
+					if (shots[i].active == 0) continue;
+					float dist = glm_vec3_distance(shots[i].position, enemies[i].position);
+					if (dist < 0.5f)
+					{
+						shots[i].active = 0;
+						enemies[i].active = 0;
+					}
+				}
+			}
+			else if (nextEnemy <= 0)
+			{
+				nextEnemy = 2;
+				initEnemy(&enemies[i]);
+			}
+		}
+
+		// move player
+		movePlayer(&player, moveInput, delta);
 		renderSprite(player.position, (vec3) { 1, 1, 1 }, "sprite", "player");
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

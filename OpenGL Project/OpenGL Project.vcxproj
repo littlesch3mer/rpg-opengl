@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\linked_list.h" />
+    <ClInclude Include="include\objects\enemy.h" />
     <ClInclude Include="include\objects\player.h" />
     <ClInclude Include="include\objects\shot.h" />
     <ClInclude Include="include\renderer.h" />

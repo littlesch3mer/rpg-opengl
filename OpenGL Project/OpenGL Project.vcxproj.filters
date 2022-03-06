@@ -84,5 +84,8 @@
     <ClInclude Include="include\objects\shot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\objects\enemy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

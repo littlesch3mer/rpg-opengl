@@ -75,5 +75,14 @@
     <ClInclude Include="include\texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\linked_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\objects\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\objects\shot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -9,6 +9,8 @@
 #include <cglm/cglm.h>
 #include "renderer.h"
 #include "texture.h"
+#include "objects/player.h"
+#include "objects/shot.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -66,6 +68,7 @@ int main(int argc, char** argv)
 	createTexture("player", "textures/player.png", 1);
 	createTexture("enemy", "textures/enemy.png", 1);
 	createTexture("tile", "textures/tile.png", 1);
+	createTexture("shot", "textures/shot.png", 1);
 
 	// shaders
 	createShader("sprite", "Shaders/sprite.vert", "Shaders/sprite.frag");
@@ -75,7 +78,16 @@ int main(int argc, char** argv)
 	setupShaderMatrices();
 
 
-
+	Player player = { .position = {0,0,0},.speed = 4 };
+	Shot shots[16];
+	for (int i = 0; i < 16; i++)
+	{
+		shots[i].position[0] = shots[i].position[1] = shots[i].position[2] = 0;
+		shots[i].velocity[0] = shots[i].velocity[1] = 0;
+		shots[i].timeleft = 0;
+		shots[i].active = 0;
+	}
+	float shotCooldown = 0;
 	// render loop
 	delta = 0;
 	float last = glfwGetTime();
@@ -96,16 +108,45 @@ int main(int argc, char** argv)
 		//if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) c.position[2] += speed * delta;
 		//if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) c.position[2] -= speed * delta;
 
-        glActiveTexture(GL_TEXTURE0);
 
+		// gameloop
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) player.position[1] += player.speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) player.position[1] -= player.speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) player.position[0] -= player.speed * delta;
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) player.position[0] += player.speed * delta;
+
+		//shoot
+		if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				if (shots[i].active == 0 && shotCooldown <= 0)
+				{
+					shots[i].position[0] = player.position[0];
+					shots[i].position[1] = player.position[1];
+					shots[i].active = 1;
+					shots[i].velocity[1] = 7;
+					shots[i].timeleft = 2;
+					printf("Shooting %d\n", i);
+					shotCooldown = 0.15f;
+				}
+			}
+		}
+		shotCooldown -= delta;
 		// render
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//renderCube("test");
-		renderSprite((vec3) { 0, 0, 0 }, (vec3) { 1, 1, 1 },"sprite","player");
-		renderSprite((vec3) { 2, 0, 0 }, (vec3) { 1, 1, 1 }, "sprite", "enemy");
-		
+		for (int i = 0; i < 16; i++)
+		{
+			updateShot(&shots[i], delta);
+			if (shots[i].active == 1)
+			{
+				//renderSprite(shots[i].position, (vec3) { 0.5f, 0.5f, 1 }, "sprite", "shot");
+				renderSprite(shots[i].position, (vec3) { 0.25f,0.25f, 1 }, "sprite", "shot");
+			}
+		}
+		renderSprite(player.position, (vec3) { 1, 1, 1 }, "sprite", "player");
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);

@@ -1,6 +1,8 @@
 #include "texture.h"
 #include <glad/glad.h>
 #include <stdio.h>
+#include "stb_image.h"
+
 int textureCount = 0;
 
 int createTexture(char* name, char* path, int alpha)

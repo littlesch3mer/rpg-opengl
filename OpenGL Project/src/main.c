@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include "texture.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -9,10 +9,7 @@
 #include "sprite_renderer.h"
 #include <cglm/cglm.h>
 #include "renderer.h"
-#include "texture.h"
-#include "objects/player.h"
-#include "objects/shot.h"
-#include "objects/enemy.h"
+#include "mesh.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -26,6 +23,7 @@ const int SCR_HEIGHT = 600;
 float delta;
 vec3 cameraPos = { 0,0,0 };
 float cameraSize = 8;
+
 
 int main(int argc, char** argv)
 {
@@ -66,7 +64,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	// texture
+	// texture	
 	createTexture("default", "textures/default.png", 1);
 	createTexture("player", "textures/player.png", 1);
 	createTexture("enemy", "textures/enemy.png", 1);
@@ -75,45 +73,24 @@ int main(int argc, char** argv)
 
 	// shaders
 	createShader("sprite", "Shaders/sprite.vert", "Shaders/sprite.frag");
-	//createShader("basic", "Shaders/basic.vert", "Shaders/basic.frag");
+	createShader("basic", "Shaders/basic.vert", "Shaders/basic.frag");
+	createShader("line", "Shaders/line.vert", "Shaders/line.frag");
+
 	useShader("sprite");
     setInt("sprite", "texture1", 0);
 	setupShaderMatrices();
 
-
-	vec3 minBounds = { -5,-3.7f, 0 };
-	vec3 maxBounds = {  5, 3.7f, 0 };
-	Player player = { .position = {0,0,0},.speed = 4 };
-	glm_vec3_copy(minBounds, player.minBounds);
-	glm_vec3_copy(maxBounds, player.maxBounds);
-	Shot shots[16];
-	Enemy enemies[4];
-	float nextEnemy = 2;
-	for (int i = 0; i < 16; i++)
-	{
-		shots[i].position[0] = shots[i].position[1] = shots[i].position[2] = 0;
-		shots[i].velocity[0] = shots[i].velocity[1] = 0;
-		shots[i].timeleft = 0;
-		shots[i].active = 0;
-	}
-	for (int i = 0; i < 4; i++)
-	{
-		enemies[i].active = 0;
-		enemies[i].position[0] = enemies->position[2] = 0;
-		enemies[i].position[1] = 1;
-		enemies[i].destination[0] = enemies[i].destination[1] = enemies[i].destination[2] = 0;
-		enemies[i].shotCooldown = 0;
-		enemies[i].speed = 2;
-		glm_vec3_copy(minBounds, enemies[i].minBounds);
-		glm_vec3_copy(maxBounds, enemies[i].maxBounds);
-		enemies[i].minBounds[1] = 0;
-	}
-	initEnemy(&enemies[0]);
-	float shotCooldown = 0;
 	// render loop
 	delta = 0;
 	float last = glfwGetTime();
 	glEnable(GL_DEPTH_TEST);
+
+	// model?
+	mesh m;
+	loadMesh(&m, "fc");
+	setupMesh(&m);
+	float timeleft = 1;
+	int c = 0;
 	while (!glfwWindowShouldClose(window))
 	{
 		updateCamera();
@@ -134,73 +111,37 @@ int main(int argc, char** argv)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// gameloop
-		vec2 moveInput = { 0,0 };
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) moveInput[1] = 1;
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) moveInput[1] = -1;
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) moveInput[0] = -1;
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) moveInput[0] = 1;
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//drawMesh(&m, "basic");
+		useShader("basic");
+		renderCube("basic");
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//renderCube("basic");
 
-		//shoot
-		if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		/*
+		if (timeleft < 0)
 		{
-			for (int i = 0; i < 16; i++)
-			{
-				if (shots[i].active == 0 && shotCooldown <= 0)
-				{
-					shots[i].position[0] = player.position[0];
-					shots[i].position[1] = player.position[1];
-					shots[i].active = 1;
-					shots[i].velocity[1] = 7;
-					shots[i].timeleft = 2;
-					printf("Shooting %d\n", i);
-					shotCooldown = 0.15f;
-				}
-			}
-		}
-		shotCooldown -= delta;
-		nextEnemy -= delta;
+			printf("COUNT: %d\n", c);
+			printf("<%f,%f,%f>\n", m.vertices[c].pos[0], m.vertices[c].pos[1], m.vertices[c].pos[2]);
+			printf("<%f,%f,%f>\n", m.vertices[c+1].pos[0], m.vertices[c+1].pos[1], m.vertices[c+1].pos[2]);
+			printf("<%f,%f,%f>\n\n\n", m.vertices[c+2].pos[0], m.vertices[c+2].pos[1], m.vertices[c+2].pos[2]);
 
-		// move and render shots
-		for (int i = 0; i < 16; i++)
+			timeleft = 0.2f;
+
+			c += 3;
+			if (c >= m.indSize - 3)
+				c = 0;
+		}
+		renderSprite(m.vertices[c].pos, (vec3) { 0.1f, 0.1, 0.1 }, "sprite", "enemy");
+		renderSprite(m.vertices[c + 1].pos, (vec3) { 0.1f, 0.1, 0.1 }, "sprite", "enemy");
+		renderSprite(m.vertices[c + 2].pos, (vec3) { 0.1f, 0.1, 0.1 }, "sprite", "enemy");
+		for (int i = 0; i < m.vertSize; i++)
 		{
-			updateShot(&shots[i], delta);
-			if (shots[i].active == 1)
-			{
-				//renderSprite(shots[i].position, (vec3) { 0.5f, 0.5f, 1 }, "sprite", "shot");
-				renderSprite(shots[i].position, (vec3) { 0.25f,0.25f, 1 }, "sprite", "shot");
-			}
+			renderSprite(m.vertices[i].pos, (vec3) { 0.05f, 0.05f, 0.05f }, "sprite", "player");
 		}
-		for (int i = 0; i < 4; i++)
-		{
-			updateEnemy(&enemies[i], delta);
-			if (enemies[i].active == 1)
-			{
-				//printf("%f,%f\n", enemies[i].position[0], enemies[i].position[1]);
-				renderSprite(enemies[i].position, (vec3) { 1, 1, 1 }, "sprite", "enemy");
-
-				// hack for projectiles!
-				for (int i = 0; i < 16; i++)
-				{
-					if (shots[i].active == 0) continue;
-					float dist = glm_vec3_distance(shots[i].position, enemies[i].position);
-					if (dist < 0.5f)
-					{
-						shots[i].active = 0;
-						enemies[i].active = 0;
-					}
-				}
-			}
-			else if (nextEnemy <= 0)
-			{
-				nextEnemy = 2;
-				initEnemy(&enemies[i]);
-			}
-		}
-
-		// move player
-		movePlayer(&player, moveInput, delta);
-		renderSprite(player.position, (vec3) { 1, 1, 1 }, "sprite", "player");
+		timeleft -= delta;
+		*/
+		renderSprite((vec3) { 0, 0, 0 }, (vec3) { 1, 1, 1 }, "sprite", "player");
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
@@ -219,38 +160,46 @@ void processInput(GLFWwindow* window)
 // setup projection, and basic model
 void setupShaderMatrices()
 {
-	// iterate through matrices later
-	unsigned int shader = getShader("sprite");
-	unsigned int modelLoc = glGetUniformLocation(shader, "model");
-	unsigned int projLoc = glGetUniformLocation(shader, "projection");
-
 	mat4 proj, model;
 	glm_mat4_identity(model);
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float*)model);
+	setMat4("sprite", "model", model);
+	setMat4("basic", "model", model);
+	setMat4("line", "model", model);
 
 	glm_mat4_identity(proj);
 	float ratio = SCR_WIDTH / (float)SCR_HEIGHT;
 	float sizeH = cameraSize / 2;
 	float sizeW = sizeH * ratio;
-	glm_ortho(-sizeW,sizeW,-sizeH,sizeH, -100, 100, proj);
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float*)proj);
+	//glm_ortho(-sizeW,sizeW,-sizeH,sizeH, -100, 100, proj);
+	glm_perspective(glm_rad(60), SCR_WIDTH / (float)SCR_HEIGHT, 0.1, 1000, proj);
+	setMat4("sprite", "projection", proj);
+	setMat4("basic", "projection", proj);
+	setMat4("line", "projection", proj);
+
 }
 void updateCamera()
 {
-	unsigned int shader = getShader("sprite");
-	unsigned int viewLoc = glGetUniformLocation(shader, "view");
 	mat4 view;
 	glm_mat4_identity(view);
-	vec3 cPos = { 0,0,-1 };
+	vec3 cPos = { 0,0,2 };
+	//cPos[2] = sin(glfwGetTime()) * 2 + 2;
+	//cPos[1] = sin(glfwGetTime()) * 6;
+
+	float ang = sin(glfwGetTime() / 5) * 3.14f;
 	vec3 cFront = { 0,0,1 };
+	glm_vec3_add(cFront, cPos, cFront);
 	vec3 cUp = { 0,1,0 };
 	vec3 cRight = { 1,0,0 };
 	glm_lookat(cFront, cPos, cUp, view);
+	glm_rotate(view, ang, cUp);
 	setMat4("sprite", "view", view);
+	setMat4("basic", "view", view);
+	setMat4("line", "view", view);
 	//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float*)view);
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
+
 

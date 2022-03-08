@@ -1,6 +1,5 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
-#include "stb_image.h"
 #define TEXTURE_ARRAY_SIZE 32
 typedef struct Texture
 {

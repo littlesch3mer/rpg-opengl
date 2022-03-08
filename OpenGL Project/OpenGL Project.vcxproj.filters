@@ -42,6 +42,9 @@
     <ClCompile Include="src\texture.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Project.rc">
@@ -78,13 +81,7 @@
     <ClInclude Include="include\linked_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\objects\player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\objects\shot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\objects\enemy.h">
+    <ClInclude Include="include\mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

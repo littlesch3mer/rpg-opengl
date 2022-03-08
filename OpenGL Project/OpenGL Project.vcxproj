@@ -155,6 +155,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\texture.cpp" />
     <ClCompile Include="src\camera.c" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.c" />
@@ -162,6 +163,7 @@
     <ClCompile Include="src\shader.c" />
     <ClCompile Include="src\sprite_renderer.c" />
     <ClCompile Include="src\stbi_image.cpp" />
+    <ClCompile Include="src\texture.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Project.rc" />
@@ -172,10 +174,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\linked_list.h" />
+    <ClInclude Include="include\objects\enemy.h" />
+    <ClInclude Include="include\objects\player.h" />
+    <ClInclude Include="include\objects\shot.h" />
     <ClInclude Include="include\renderer.h" />
     <ClInclude Include="include\shader.h" />
     <ClInclude Include="include\sprite_renderer.h" />
     <ClInclude Include="include\stb_image.h" />
+    <ClInclude Include="include\texture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

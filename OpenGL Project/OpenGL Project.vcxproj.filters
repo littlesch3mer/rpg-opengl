@@ -36,6 +36,12 @@
     <ClCompile Include="src\camera.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGL Project.rc">
@@ -64,6 +70,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\linked_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\objects\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\objects\shot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\objects\enemy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

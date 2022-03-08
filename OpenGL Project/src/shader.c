@@ -1,7 +1,7 @@
 #include "shader.h"
 #include <stdio.h>
 #include <stdlib.h>"
-int shaderCount = 10;
+int shaderCount = 0;
 
 int createShader(char* name, char* vertexPath, char* fragmentPath)
 {	
@@ -64,6 +64,11 @@ void setInt(char* shader, char* name, int value)
 void setFloat(char* shader, char* name, float value)
 {
 	glUniform1f(glGetUniformLocation(getShader(shader), name), value);
+}
+
+void setMat4(char* shader, char* name, mat4 value)
+{
+	glUniformMatrix4fv(glGetUniformLocation(getShader(shader), name),1,GL_FALSE, (float*)value);
 }
 
 int useShader(char* shader)
